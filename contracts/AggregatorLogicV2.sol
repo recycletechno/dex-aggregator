@@ -6,7 +6,7 @@ import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.s
 import "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IDexStrategy.sol";
 
-contract AggregatorLogic is Initializable, OwnableUpgradeable {
+contract AggregatorLogicV2 is Initializable, OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
     mapping(bytes32 => IDexStrategy) public dexStrategies;
@@ -16,6 +16,13 @@ contract AggregatorLogic is Initializable, OwnableUpgradeable {
 
     function initialize() external initializer {
         __Ownable_init(msg.sender);
+    }
+    
+    // A new function that can be called after upgrade
+    function initializeV2() external {
+        // Any V2-specific initialization can go here
+        // No initializer modifier, so we can call this after upgrading
+        // No onlyOwner modifier, as it will be called through the proxy during upgrade
     }
 
     function setStrategy(bytes32 dexId, address strategy) external onlyOwner {
@@ -31,6 +38,14 @@ contract AggregatorLogic is Initializable, OwnableUpgradeable {
 
     function getDexCount() external view returns (uint256) {
         return dexStrategyKeys.length;
+    }
+
+    function getDexNames() external view returns (string[] memory) {
+        string[] memory names = new string[](dexStrategyKeys.length);
+        for (uint256 i = 0; i < dexStrategyKeys.length; i++) {
+            names[i] = string(abi.encodePacked(dexStrategyKeys[i]));
+        }
+        return names;
     }
 
     function getBestQuote(
@@ -65,13 +80,8 @@ contract AggregatorLogic is Initializable, OwnableUpgradeable {
         require(bestDex != "", "No DEX available");
         require(bestQuote >= minAmountOut, "Slippage too high");
 
-        // First approve the strategy to spend tokens
         IERC20(tokenIn).safeIncreaseAllowance(address(dexStrategies[bestDex]), amountIn);
-
-        // Then transfer tokens from caller to this contract
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
-
-        // Execute the swap
         actualOut = dexStrategies[bestDex].swap(tokenIn, tokenOut, amountIn, minAmountOut, recipient);
     }
-}
+} 
