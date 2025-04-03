@@ -32,21 +32,26 @@ The protocol follows a modular design with the following key components:
 
 ```
 ├── contracts/
-│   ├── AggregatorLogic.sol        # Main aggregator contract
-│   ├── AggregatorLogicV2.sol      # Upgraded version
+│   ├── AggregatorLogic.sol         # Main aggregator contract
+│   ├── AggregatorLogicV2.sol       # Upgraded version
 │   ├── interfaces/
-│   │   ├── IDexStrategy.sol       # Strategy interface
+│   │   ├── IDexStrategy.sol        # Strategy interface
 │   │   ├── IUniswapV2Router02.sol
 │   │   ├── IUniswapV3Quoter.sol
 │   │   └── IUniswapV3SwapRouter.sol
 │   └── strategies/
-│       ├── DexStrategyUniV2.sol   # Uniswap V2 implementation
-│       └── DexStrategyUniV3.sol   # Uniswap V3 implementation
-├── script/                        # Deployment scripts
-├── test/                          # Test files
-├── lib/                           # External dependencies
+│       ├── DexStrategyUniV2.sol    # Uniswap V2 implementation
+│       └── DexStrategyUniV3.sol    # Uniswap V3 implementation
+├── script/
+│   └── DeployAggregator.s.sol      # Deployment script for the aggregator
+├── test/
+│   ├── AggregatorTest.t.sol        # Core aggregator functionality tests
+│   ├── AggregatorUpgradeTest.t.sol # Upgrade functionality tests
+│   ├── UniswapV2ForkTest.t.sol     # Uniswap V2 integration tests
+│   └── UniswapV3ForkTest.t.sol     # Uniswap V3 integration tests
+├── lib/                            # External dependencies
 ├── assets/
-│   └── diagram.png                # Diagram
+│   └── diagram.png                 # Diagram
 ```
 
 ## Setup and Installation
