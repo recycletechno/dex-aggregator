@@ -4,13 +4,21 @@ A modular and upgradeable DEX aggregator protocol that supports multiple DEX str
 
 ## Protocol Architecture
 
+![Protocol Architecture Diagram](assets/diagram.png)
+
 The protocol follows a modular design with the following key components:
 
-1. **AggregatorLogic**: The main contract that manages DEX strategies and routes swaps
-2. **Strategy Interface**: Standard interface for DEX strategies
-3. **Concrete Strategies**: Implementation of specific DEX protocols
-   - Uniswap V2 Strategy
-   - Uniswap V3 Strategy
+1. **ProxyAdmin**: Administrative contract that manages the upgrade process and controls the proxy
+2. **TransparentUpgradeableProxy**: Proxy contract that delegates calls to the current implementation while maintaining state
+3. **AggregatorLogic**: Core implementation contract that:
+   - Manages DEX strategies
+   - Routes user swaps to the best DEX (`getBestQuote`, `swap`)
+   - Can be upgraded to newer versions (e.g., AggregatorLogicV2)
+4. **IDexStrategy**: Standard interface that all DEX strategies must implement
+5. **Strategy Implementations**: Concrete implementations for different DEX protocols:
+   - DexStrategyUniV2 (Uniswap V2)
+   - DexStrategyUniV3 (Uniswap V3)
+   - DexStrategyNext (Future implementations)
 
 ## Features
 
@@ -36,7 +44,9 @@ The protocol follows a modular design with the following key components:
 │       └── DexStrategyUniV3.sol   # Uniswap V3 implementation
 ├── script/                        # Deployment scripts
 ├── test/                          # Test files
-└── lib/                           # External dependencies
+├── lib/                           # External dependencies
+├── assets/
+│   └── diagram.png                # Diagram
 ```
 
 ## Setup and Installation
@@ -46,7 +56,11 @@ The protocol follows a modular design with the following key components:
    ```bash
    forge install
    ```
-3. Create a `.env` file with necessary environment variables
+3. Create a `.env` file with necessary environment variables:
+   ```
+   ETH_RPC_URL=
+   PRIVATE_KEY=
+   ```
 
 ## Usage
 
