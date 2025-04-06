@@ -15,4 +15,9 @@ interface IDexStrategy {
         uint256 minAmountOut,
         address recipient
     ) external returns (uint256 amountOut);
+
+    function isPairSupported(
+        address tokenIn,
+        address tokenOut
+    ) external view returns (bool);
 }

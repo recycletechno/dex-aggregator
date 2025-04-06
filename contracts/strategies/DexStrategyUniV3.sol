@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 import "../interfaces/IDexStrategy.sol";
 import "../interfaces/IUniswapV3Quoter.sol";
 import "../interfaces/IUniswapV3SwapRouter.sol";
+import "../interfaces/IUniswapV3Factory.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
@@ -17,18 +18,40 @@ contract DexStrategyUniV3 is IDexStrategy {
 
     IUniswapV3Quoter public immutable quoter;
     IUniswapV3SwapRouter public immutable swapRouter;
-    uint24 public immutable feeTier; // e.g. 3000 = 0.3%
+    IUniswapV3Factory public immutable factory;
+    uint24[] public feeTiers;
 
     constructor(
         address _quoter,
         address _swapRouter,
-        uint24 _feeTier
+        address _factory
     ) {
         require(_quoter != address(0), "Invalid quoter");
         require(_swapRouter != address(0), "Invalid router");
+        require(_factory != address(0), "Invalid factory");
+        
         quoter = IUniswapV3Quoter(_quoter);
         swapRouter = IUniswapV3SwapRouter(_swapRouter);
-        feeTier = _feeTier;
+        factory = IUniswapV3Factory(_factory);
+        
+        // Initialize fee tiers: 0.05%, 0.3%, 1%
+        feeTiers = [500, 3000, 10000];
+    }
+
+    function isPairSupported(
+        address tokenIn,
+        address tokenOut
+    ) public view override returns (bool) {
+        if (tokenIn == tokenOut) return false;
+        
+        for (uint i = 0; i < feeTiers.length; i++) {
+            address pool = factory.getPool(tokenIn, tokenOut, feeTiers[i]);
+            if (pool != address(0)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     function getQuote(
@@ -40,17 +63,29 @@ contract DexStrategyUniV3 is IDexStrategy {
             return 0;
         }
 
-        try quoter.quoteExactInputSingle(
-            tokenIn,
-            tokenOut,
-            feeTier,
-            amountIn,
-            0
-        ) returns (uint256 quotedAmountOut) {
-            amountOut = quotedAmountOut;
-        } catch {
-            amountOut = 0;
+        if (!isPairSupported(tokenIn, tokenOut)) {
+            return 0;
         }
+
+        // Try each fee tier and return the best quote
+        uint256 bestQuote = 0;
+        for (uint i = 0; i < feeTiers.length; i++) {
+            try quoter.quoteExactInputSingle(
+                tokenIn,
+                tokenOut,
+                feeTiers[i],
+                amountIn,
+                0
+            ) returns (uint256 quotedAmountOut) {
+                if (quotedAmountOut > bestQuote) {
+                    bestQuote = quotedAmountOut;
+                }
+            } catch {
+                continue;
+            }
+        }
+        
+        return bestQuote;
     }
 
     function swap(
@@ -71,7 +106,7 @@ contract DexStrategyUniV3 is IDexStrategy {
             .ExactInputSingleParams({
                 tokenIn: tokenIn,
                 tokenOut: tokenOut,
-                fee: feeTier,
+                fee: feeTiers[0],
                 recipient: recipient,
                 deadline: block.timestamp + 120,
                 amountIn: amountIn,

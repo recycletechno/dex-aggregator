@@ -3,8 +3,8 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Script.sol";
 import "forge-std/console.sol";
-import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import "openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";    
+import "openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
 import "../contracts/AggregatorLogic.sol";
 import "../contracts/strategies/DexStrategyUniV2.sol";
 import "../contracts/strategies/DexStrategyUniV3.sol";
@@ -18,8 +18,10 @@ import "../contracts/strategies/DexStrategyUniV3.sol";
  */
 contract DeployAggregator is Script {
     address constant UNI_V2_ROUTER      = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address constant UNI_V2_FACTORY     = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
     address constant UNI_V3_QUOTER      = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
     address constant UNI_V3_SWAPROUTER  = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    address constant UNI_V3_FACTORY     = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
 
     function run() external {
         vm.startBroadcast();
@@ -49,10 +51,10 @@ contract DeployAggregator is Script {
         AggregatorLogic aggregator = AggregatorLogic(address(proxy));
 
         // 5) Deploy strategies (same as before)
-        DexStrategyUniV2 uniV2Strategy = new DexStrategyUniV2(UNI_V2_ROUTER);
+        DexStrategyUniV2 uniV2Strategy = new DexStrategyUniV2(UNI_V2_ROUTER, UNI_V2_FACTORY);
         console.log("UniswapV2 Strategy deployed at:", address(uniV2Strategy));
         
-        DexStrategyUniV3 uniV3Strategy = new DexStrategyUniV3(UNI_V3_QUOTER, UNI_V3_SWAPROUTER, 3000);
+        DexStrategyUniV3 uniV3Strategy = new DexStrategyUniV3(UNI_V3_QUOTER, UNI_V3_SWAPROUTER, UNI_V3_FACTORY);
         console.log("UniswapV3 Strategy deployed at:", address(uniV3Strategy));
 
         // 6) Since aggregator is OwnableUpgradeable, we (currently msg.sender) are the owner

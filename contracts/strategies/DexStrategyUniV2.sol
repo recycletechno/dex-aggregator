@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 
 import "../interfaces/IDexStrategy.sol";
 import "../interfaces/IUniswapV2Router02.sol";
+import "../interfaces/IUniswapV2Factory.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
@@ -10,10 +11,22 @@ contract DexStrategyUniV2 is IDexStrategy {
     using SafeERC20 for IERC20;
 
     IUniswapV2Router02 public immutable router;
+    IUniswapV2Factory public immutable factory;
 
-    constructor(address _router) {
+    constructor(address _router, address _factory) {
         require(_router != address(0), "Invalid router");
+        require(_factory != address(0), "Invalid factory");
         router = IUniswapV2Router02(_router);
+        factory = IUniswapV2Factory(_factory);
+    }
+
+    function isPairSupported(
+        address tokenIn,
+        address tokenOut
+    ) public view override returns (bool) {
+        if (tokenIn == tokenOut) return false;
+        address pair = factory.getPair(tokenIn, tokenOut);
+        return pair != address(0);
     }
 
     function getQuote(
@@ -25,16 +38,16 @@ contract DexStrategyUniV2 is IDexStrategy {
             return 0;
         }
 
+        if (!isPairSupported(tokenIn, tokenOut)) {
+            return 0;
+        }
+
         address[] memory path = new address[](2);
         path[0] = tokenIn;
         path[1] = tokenOut;
 
-        // If the pair doesn't exist, the call reverts. We can do a try/catch or just let it revert.
-        try router.getAmountsOut(amountIn, path) returns (uint256[] memory amounts) {
-            amountOut = amounts[1];
-        } catch {
-            amountOut = 0;
-        }
+        uint256[] memory amounts = router.getAmountsOut(amountIn, path);
+        amountOut = amounts[1];
     }
 
     function swap(

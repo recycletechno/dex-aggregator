@@ -14,8 +14,10 @@ import {console} from "forge-std/console.sol";
 
 
 address constant UNI_V2_ROUTER_MAINNET = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; 
+address constant UNI_V2_FACTORY_MAINNET = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
 address constant UNI_V3_QUOTER_MAINNET = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
 address constant UNI_V3_ROUTER_MAINNET = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+address constant UNI_V3_FACTORY_MAINNET = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
 
 address constant WETH_MAINNET = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 address constant USDC_MAINNET = address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
@@ -42,11 +44,11 @@ contract AggregatorTest is Test {
         aggregator = AggregatorLogic(address(proxy));
 
         // 3) Deploy real strategies
-        DexStrategyUniV2 v2Strategy = new DexStrategyUniV2(UNI_V2_ROUTER_MAINNET);
+        DexStrategyUniV2 v2Strategy = new DexStrategyUniV2(UNI_V2_ROUTER_MAINNET, UNI_V2_FACTORY_MAINNET);
         DexStrategyUniV3 v3Strategy = new DexStrategyUniV3(
             UNI_V3_QUOTER_MAINNET,
             UNI_V3_ROUTER_MAINNET,
-            3000  // 0.3% fee tier, we can iterate on list of fee tiers
+            UNI_V3_FACTORY_MAINNET
         );
 
         aggregator.setStrategy("UNISWAP_V2", address(v2Strategy));
@@ -129,7 +131,7 @@ contract AggregatorTest is Test {
         aggregator = AggregatorLogic(address(proxy));
 
         // 3) Deploy and add only Uniswap V2 strategy initially
-        DexStrategyUniV2 v2Strategy = new DexStrategyUniV2(UNI_V2_ROUTER_MAINNET);
+        DexStrategyUniV2 v2Strategy = new DexStrategyUniV2(UNI_V2_ROUTER_MAINNET, UNI_V2_FACTORY_MAINNET);
         aggregator.setStrategy("UNISWAP_V2", address(v2Strategy));
         
         // 4) Verify that getDexCount() returns 1
@@ -141,7 +143,7 @@ contract AggregatorTest is Test {
         DexStrategyUniV3 v3Strategy = new DexStrategyUniV3(
             UNI_V3_QUOTER_MAINNET,
             UNI_V3_ROUTER_MAINNET,
-            3000  // 0.3% fee tier
+            UNI_V3_FACTORY_MAINNET
         );
         aggregator.setStrategy("UNISWAP_V3", address(v3Strategy));
         
