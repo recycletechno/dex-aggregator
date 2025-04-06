@@ -36,7 +36,9 @@ The protocol follows a modular design with the following key components:
 │   ├── AggregatorLogicV2.sol       # Upgraded version
 │   ├── interfaces/
 │   │   ├── IDexStrategy.sol        # Strategy interface
+│   │   ├── IUniswapV2Factory.sol   # Uniswap V2 factory interface
 │   │   ├── IUniswapV2Router02.sol
+│   │   ├── IUniswapV3Factory.sol   # Uniswap V3 factory interface
 │   │   ├── IUniswapV3Quoter.sol
 │   │   └── IUniswapV3SwapRouter.sol
 │   └── strategies/
